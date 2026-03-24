@@ -104,6 +104,15 @@
 <script>
   let ws = null, token = null, inRoom = false
 
+  window.onload = () => {
+    const savedToken = localStorage.getItem("token")
+
+    if (savedToken) {
+      token = savedToken
+      connectWebSocket()
+    }
+  }
+
   function switchTab(tab) {
     document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')))
     document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none'
@@ -143,6 +152,7 @@
       const data = await res.json()
       if (!data.token) { setStatus(data.message || 'Login failed', 'error'); return }
       token = data.token   // ✅ save token
+      localStorage.setItem("token", token) 
       connectWebSocket()   // ✅ now connect WS
     } catch { setStatus('Server error. Try again.', 'error') }
     finally { btn.disabled = false; btn.textContent = 'Login' }
@@ -174,6 +184,7 @@
       document.getElementById('joinBtn').textContent = 'Join'
       document.getElementById('messages').innerHTML = ''
       setStatus('Session ended. Please login again.', 'error')
+      localStorage.removeItem("token")
     }
   }
 
