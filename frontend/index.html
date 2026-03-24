@@ -125,7 +125,7 @@
     const btn = document.getElementById('signupBtn')
     btn.disabled = true; btn.textContent = 'Creating...'
     try {
-      await fetch('http://localhost:9000/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
+      await fetch('https://my-project-83jg.onrender.com/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
       setStatus('Account created! Please login.', 'success')
       switchTab('login')
     } catch { setStatus('Server error. Try again.', 'error') }
@@ -139,7 +139,7 @@
     const btn = document.getElementById('loginBtn')
     btn.disabled = true; btn.textContent = 'Logging in...'
     try {
-      const res = await fetch('http://localhost:9000/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      const res = await fetch('https://my-project-83jg.onrender.com/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
       const data = await res.json()
       if (!data.token) { setStatus(data.message || 'Login failed', 'error'); return }
       token = data.token   // ✅ save token
@@ -149,7 +149,7 @@
   }
 
   function connectWebSocket() {
-    ws = new WebSocket(`ws://localhost:9000?token=${token}`)  // ✅ token in URL
+    ws = new WebSocket(`wss://my-project-83jg.onrender.com?token=${token}`)  // ✅ token in URL
     ws.onopen = () => {
       document.getElementById('authScreen').style.display = 'none'
       document.getElementById('chatScreen').style.display = 'flex'
