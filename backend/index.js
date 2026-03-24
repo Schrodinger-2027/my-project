@@ -50,8 +50,8 @@ wss.on('connection' , (ws)=>{
             const room = rooms.get(ws.roomId)
 
             room.forEach(client => {
-                if(client != ws){
-                    client.send('message is : ' + message)
+                if(client !== ws){
+                    client.send(JSON.stringify({message}))
                 }
             });
         }

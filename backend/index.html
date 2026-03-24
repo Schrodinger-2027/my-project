@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebSocket Chat</title>
+</head>
+<body>
+  <input id="roomInput" placeholder="Room ID" value="1" />
+  <button onclick="toggleConnect()">Connect</button>
+  <div id="status">Disconnected</div>
+
+  <div id="messages" style="height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; margin:10px 0;"></div>
+
+  <input id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMsg()" disabled />
+  <button id="sendBtn" onclick="sendMsg()" disabled>Send</button>
+
+  <script>
+    let ws = null;
+
+    function addMsg(text, type) {
+      const div = document.createElement('div');
+      div.textContent = (type === 'sent' ? 'You: ' : '') + text;
+      div.style.color = type === 'system' ? 'gray' : type === 'sent' ? 'blue' : 'black';
+      document.getElementById('messages').appendChild(div);
+    }
+
+    function toggleConnect() {
+      if (ws) { ws.close(); return; }
+      const roomId = document.getElementById('roomInput').value.trim();
+      ws = new WebSocket('ws://localhost:9000');
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'join', roomId }));
+        document.getElementById('status').textContent = 'Connected to room ' + roomId;
+        document.getElementById('msgInput').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        addMsg('Joined room ' + roomId, 'system');
+      };
+
+      ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.message) addMsg(data.message, 'received');
+        else if (data.error) addMsg('Error: ' + data.error, 'system');
+      };
+
+      ws.onclose = () => {
+        ws = null;
+        document.getElementById('status').textContent = 'Disconnected';
+        document.getElementById('msgInput').disabled = true;
+        document.getElementById('sendBtn').disabled = true;
+      };
+    }
+
+    function sendMsg() {
+      const input = document.getElementById('msgInput');
+      const roomId = document.getElementById('roomInput').value.trim();
+      const msg = input.value.trim();
+      if (!msg || !ws) return;
+      ws.send(JSON.stringify({ type: 'message', roomId, message: msg }));
+      addMsg(msg, 'sent');
+      input.value = '';
+    }
+  </script>
+</body>
+</html>
