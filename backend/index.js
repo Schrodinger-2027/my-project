@@ -10,13 +10,16 @@ const { verifyToken } = require('./middlewares/auth.js')
 
 dotenv.config()
 
-const PORT = 9000
+const PORT = process.env.PORT || 9000
 const MONGODB_URL = process.env.MONGODB_URL
 
 const app = express()
 connectDB(MONGODB_URL)
 
-app.use(cors())
+app.use(cors({
+  origin: "https://chatting-pritam.vercel.app",
+  credentials: true
+}))
 app.use(express.json())
 app.use(express.urlencoded({extended : true}))
 
@@ -32,7 +35,7 @@ const rooms = new Map()
 wss.on('connection' , async (ws , req)=>{
 
    
-    const url = new URL(req.url , `http://localhost:${PORT}`)
+    const url = new URL(req.url , "http://dummy")
     const token = url.searchParams.get('token')
 
     const decoded = await verifyToken(token)
