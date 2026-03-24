@@ -1,6 +1,7 @@
 const express = require('express')
 const dotenv = require('dotenv')
 const http = require('http')
+const cors = require('cors')
 const {WebSocketServer} = require('ws')
 const { connectDB } = require('./util')
 const { UserSignUp } = require('./controllers/UserSignUp.js')
@@ -15,7 +16,7 @@ const MONGODB_URL = process.env.MONGODB_URL
 const app = express()
 connectDB(MONGODB_URL)
 
-
+app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended : true}))
 
@@ -28,13 +29,13 @@ const wss = new WebSocketServer({ server })
 
 const rooms = new Map()
 
-wss.on('connection' , (ws , req)=>{
+wss.on('connection' , async (ws , req)=>{
 
    
     const url = new URL(req.url , `http://localhost:${PORT}`)
     const token = url.searchParams.get('token')
 
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
 
     if(!decoded){
         ws.send('Unauthorized - Invalid or expired token')
@@ -42,6 +43,9 @@ wss.on('connection' , (ws , req)=>{
         return
     }
     ws.userId = decoded.userId
+    ws.name = decoded.name
+
+    console.log(decoded)
    
     ws.on('message' , (data)=>{
         
@@ -79,7 +83,7 @@ wss.on('connection' , (ws , req)=>{
 
             room.forEach(client => {
                 if(client !== ws){
-                    client.send(JSON.stringify({message}))
+                    client.send(JSON.stringify({message , sender : ws.name}))
                 }
             });
         }

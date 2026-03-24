@@ -16,7 +16,7 @@ export async function userLogin(req , res){
 
     if(!isCorrect) return res.send('Credentials are Wrong')
 
-    const token = jwt.sign({userId : user._id} , process.env.SECRET_KEY , {expiresIn : "60s"})
+    const token = jwt.sign({userId : user._id , name : user.name , email : user.email} , process.env.SECRET_KEY)
 
     res.setHeader("Authorization" , `Bearer ${token}`)
 
