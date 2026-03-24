@@ -3,6 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <title>WebSocket Chat</title>
+  <style>
+    #messages { display: flex; flex-direction: column; gap: 6px; }
+
+    .msg {
+      max-width: 60%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .sent {
+      align-self: flex-end;       /* push to right */
+      background: #007bff;
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+
+    .received {
+      align-self: flex-start;     /* push to left */
+      background: #f1f1f1;
+      color: black;
+      border-bottom-left-radius: 2px;
+    }
+
+    .system {
+      align-self: center;
+      color: gray;
+      font-size: 12px;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
   <input id="roomInput" placeholder="Room ID" value="1" />
@@ -19,9 +51,10 @@
 
     function addMsg(text, type) {
       const div = document.createElement('div');
-      div.textContent = (type === 'sent' ? 'You: ' : '') + text;
-      div.style.color = type === 'system' ? 'gray' : type === 'sent' ? 'blue' : 'black';
+      div.classList.add('msg', type);           // ✅ add both classes
+      div.textContent = text;                   // ✅ no "You:" prefix needed, position shows it
       document.getElementById('messages').appendChild(div);
+      document.getElementById('messages').scrollTop = 9999  // auto scroll down
     }
 
     function toggleConnect() {
@@ -48,6 +81,7 @@
         document.getElementById('status').textContent = 'Disconnected';
         document.getElementById('msgInput').disabled = true;
         document.getElementById('sendBtn').disabled = true;
+        addMsg('Disconnected', 'system');
       };
     }
 

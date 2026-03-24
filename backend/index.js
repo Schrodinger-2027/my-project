@@ -2,11 +2,25 @@ const express = require('express')
 const dotenv = require('dotenv')
 const http = require('http')
 const {WebSocketServer} = require('ws')
+const { connectDB } = require('./util')
+const { UserSignUp } = require('./controllers/UserSignUp.js')
+const { userLogin } = require('./controllers/UserLogin.js')
+const { verifyToken } = require('./middlewares/auth.js')
 
 dotenv.config()
 
-const app = express()
 const PORT = 9000
+const MONGODB_URL = process.env.MONGODB_URL
+
+const app = express()
+connectDB(MONGODB_URL)
+
+
+app.use(express.json())
+app.use(express.urlencoded({extended : true}))
+
+
+
 
 
 const server = http.createServer(app)
@@ -14,7 +28,21 @@ const wss = new WebSocketServer({ server })
 
 const rooms = new Map()
 
-wss.on('connection' , (ws)=>{
+wss.on('connection' , (ws , req)=>{
+
+   
+    const url = new URL(req.url , `http://localhost:${PORT}`)
+    const token = url.searchParams.get('token')
+
+    const decoded = verifyToken(token)
+
+    if(!decoded){
+        ws.send('Unauthorized - Invalid or expired token')
+        ws.close() 
+        return
+    }
+    ws.userId = decoded.userId
+   
     ws.on('message' , (data)=>{
         
         let parsedData
@@ -69,6 +97,9 @@ wss.on('connection' , (ws)=>{
 app.get('/' , (req , res)=>{
     res.send('Hello')
 })
+
+app.post('/signup' , UserSignUp)
+app.post('/login' , userLogin)
 
 
 
