@@ -304,6 +304,24 @@
     .received { align-self: flex-start; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
     .system   { align-self: center;     color: var(--muted); font-size: 11px; font-style: italic; background: none; padding: 2px 0; }
 
+    /* sender name label above received messages */
+    .msg-sender {
+      font-size: 10px;
+      color: var(--accent2);
+      margin-bottom: 3px;
+      padding-left: 2px;
+      align-self: flex-start;
+    }
+
+    .msg-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 72%;
+    }
+
+    .msg-wrapper.sent-wrapper { align-self: flex-end; align-items: flex-end; }
+    .msg-wrapper.received-wrapper { align-self: flex-start; align-items: flex-start; }
+
     .input-bar {
       padding: 12px 16px;
       border-top: 1px solid var(--border);
@@ -346,7 +364,7 @@
         <input type="password" id="loginPassword"
           onkeydown="if(event.key==='Enter'){ handleLogin(); return false; }" />
       </div>
-        <button type="button" class="btn" onclick="handleLogin()" id="loginBtn">Login</button>
+      <button type="button" class="btn" onclick="handleLogin()" id="loginBtn">Login</button>
     </div>
 
     <!-- Signup -->
@@ -361,8 +379,8 @@
       </div>
       <div class="form-group">
         <label>Password</label>
-          <input type="password" id="signupPassword"
-            onkeydown="if(event.key==='Enter'){ handleSignup(); return false; }" />
+        <input type="password" id="signupPassword"
+          onkeydown="if(event.key==='Enter'){ handleSignup(); return false; }" />
       </div>
       <button type="button" class="btn" onclick="handleSignup()" id="signupBtn">Create Account</button>
     </div>
@@ -422,13 +440,13 @@
   let ws = null, token = null, inRoom = false
   let pendingEmail = null
 
-  // restore session
+  // ── RESTORE SESSION (keep token, reconnect without forcing login) ──
   window.onload = () => {
     const saved = localStorage.getItem('token')
     if (saved) { token = saved; connectWebSocket() }
   }
 
-  // tab switcher
+  // ── TAB SWITCHER ──
   function switchTab(tab) {
     const isLogin  = tab === 'login'
     const isSignup = tab === 'signup'
@@ -478,7 +496,7 @@
     }
   }
 
-  // ── OTP helpers ──
+  // ── OTP HELPERS ──
   function otpInput(i) {
     const box = document.getElementById(`otp${i}`)
     box.value = box.value.replace(/\D/g, '')
@@ -530,7 +548,7 @@
     }
   }
 
-  // ── RESEND OTP ──
+  // ── RESEND OTP (now checks response status) ──
   async function resendOtp() {
     if (!pendingEmail) return
     const btn = document.getElementById('resendBtn')
@@ -541,11 +559,13 @@
       if (cd < 0) { clearInterval(t); btn.disabled = false; btn.textContent = 'Resend' }
     }, 1000)
     try {
-      await fetch(`${API}/resend-otp`, {
+      const res = await fetch(`${API}/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail })
       })
+      const data = await res.json()
+      if (!res.ok) return setStatus(data.message || 'Failed to resend.', 'error')
       setStatus('New OTP sent!', 'success')
     } catch {
       setStatus('Failed to resend. Try again.', 'error')
@@ -585,38 +605,58 @@
     ws.onopen = () => {
       document.getElementById('authScreen').style.display = 'none'
       document.getElementById('chatScreen').style.display = 'flex'
+      resetChatUI() // reset room state on every fresh connection
     }
 
     ws.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data)
-        if (data.message) addMsg(`${data.sender}: ${data.message}`, 'received')
+        if (data.message) addMsg(data.message, 'received', data.sender)
         else if (data.error) addMsg('⚠ ' + data.error, 'system')
       } catch { addMsg(e.data, 'system') }
     }
 
-    ws.onclose = () => {
-      ws = null; token = null; inRoom = false
+    ws.onclose = (event) => {
+      // Only wipe token if it was an auth failure (code 1008) or explicit disconnect
+      const authFailed = event.code === 1008 || event.wasClean === false
+      ws = null
+      inRoom = false
+
       document.getElementById('chatScreen').style.display = 'none'
       document.getElementById('authScreen').style.display = 'block'
-      document.getElementById('roomLabel').textContent = 'not in a room'
-      document.getElementById('msgInput').disabled = true
-      document.getElementById('sendBtn').disabled = true
-      document.getElementById('joinBtn').disabled = false
-      document.getElementById('joinBtn').textContent = 'Join'
-      document.getElementById('messages').innerHTML = ''
-      switchTab('login')
-      setStatus('Session ended. Please login again.', 'error')
-      localStorage.removeItem('token')
+
+      if (authFailed) {
+        // Token invalid/expired — force re-login
+        token = null
+        localStorage.removeItem('token')
+        switchTab('login')
+        setStatus('Session expired. Please login again.', 'error')
+      } else {
+        // Normal disconnect (user clicked Disconnect) — keep token, stay on login
+        switchTab('login')
+        setStatus('Disconnected.', '')
+      }
     }
 
     ws.onerror = () => setStatus('Connection error. Please try again.', 'error')
   }
 
   // ── ROOM & CHAT ──
+  function resetChatUI() {
+    inRoom = false
+    document.getElementById('roomLabel').textContent = 'not in a room'
+    document.getElementById('msgInput').disabled = true
+    document.getElementById('sendBtn').disabled = true
+    document.getElementById('joinBtn').disabled = false
+    document.getElementById('joinBtn').textContent = 'Join'
+    document.getElementById('messages').innerHTML = ''
+    document.getElementById('roomInput').value = 'room-1'
+  }
+
   function joinRoom() {
     const roomId = document.getElementById('roomInput').value.trim()
-    if (!roomId || !ws) return
+    if (!roomId || !ws || ws.readyState !== WebSocket.OPEN) return
+
     ws.send(JSON.stringify({ type: 'join', roomId }))
     inRoom = true
     document.getElementById('roomLabel').textContent = '# ' + roomId
@@ -632,20 +672,44 @@
     const input  = document.getElementById('msgInput')
     const roomId = document.getElementById('roomInput').value.trim()
     const msg    = input.value.trim()
-    if (!msg || !ws || !inRoom) return
+    if (!msg || !ws || ws.readyState !== WebSocket.OPEN || !inRoom) return
     ws.send(JSON.stringify({ type: 'message', roomId, message: msg }))
     addMsg(msg, 'sent')
     input.value = ''
   }
 
-  function disconnect() { if (ws) ws.close() }
+  // Disconnect cleanly — token is preserved so user can reconnect without re-login
+  function disconnect() {
+    if (ws) ws.close(1000, 'User disconnected')
+  }
 
-  function addMsg(text, type) {
-    const el  = document.getElementById('messages')
-    const div = document.createElement('div')
-    div.classList.add('msg', type)
-    div.textContent = text
-    el.appendChild(div)
+  // ── ADD MESSAGE (now shows sender name on received messages) ──
+  function addMsg(text, type, sender) {
+    const el = document.getElementById('messages')
+
+    if (type === 'system') {
+      const div = document.createElement('div')
+      div.classList.add('msg', 'system')
+      div.textContent = text
+      el.appendChild(div)
+    } else {
+      const wrapper = document.createElement('div')
+      wrapper.classList.add('msg-wrapper', type === 'sent' ? 'sent-wrapper' : 'received-wrapper')
+
+      if (type === 'received' && sender) {
+        const nameEl = document.createElement('div')
+        nameEl.classList.add('msg-sender')
+        nameEl.textContent = sender
+        wrapper.appendChild(nameEl)
+      }
+
+      const div = document.createElement('div')
+      div.classList.add('msg', type)
+      div.textContent = text
+      wrapper.appendChild(div)
+      el.appendChild(wrapper)
+    }
+
     el.scrollTop = el.scrollHeight
   }
 </script>

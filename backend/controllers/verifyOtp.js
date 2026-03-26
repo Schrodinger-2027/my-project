@@ -1,32 +1,30 @@
-import { User } from '../models/user.js'
-import { Otp }  from '../models/otp.js'
-
 export async function VerifyOtp(req, res) {
-    try {
-        const { email, otp } = req.body
+    const { email, otp } = req.body
 
-        if (!email || !otp)
-            return res.status(400).json({ message: 'Email and OTP are required' })
+    if (!email || !otp) 
+        return res.status(400).json({ message: 'Email and OTP are required' })
 
-        const otpRecord = await Otp.findOne({ email })
+    const record = await Otp.findOne({ email })
 
-        if (!otpRecord)
-            return res.status(400).json({ message: 'OTP not found or expired' })
+    if (!record) 
+        return res.status(404).json({ message: 'OTP not found. Please sign up again.' })
 
-        if (otpRecord.otp !== otp)
-            return res.status(400).json({ message: 'Invalid OTP' })
-
-        if (otpRecord.expiresAt < new Date())
-            return res.status(400).json({ message: 'OTP has expired' })
-
-        
-        await User.findOneAndUpdate({ email }, { verified: true })
+    if (record.expiresAt < new Date()) {
         await Otp.deleteOne({ email })
-
-        return res.status(200).json({ message: 'Email verified successfully' })
-
-    } catch (err) {
-        console.error('OTP verify error:', err)
-        return res.status(500).json({ message: 'Server error' })
+        return res.status(410).json({ message: 'OTP expired. Please sign up again.' })
     }
+
+    if (String(record.otp) !== String(otp)) 
+        return res.status(401).json({ message: 'Invalid OTP' })
+
+    // OTP is valid — now save the user
+    const { name, email: userEmail, password } = record.tempUser
+
+    const user = new User({ name, email: userEmail, password })
+    await user.save()
+
+    // Clean up OTP record
+    await Otp.deleteOne({ email })
+
+    res.status(201).json({ message: "Signup successful" })
 }
