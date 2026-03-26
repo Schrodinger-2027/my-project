@@ -17,10 +17,14 @@ export async function UserSignUp(req  , res) {
     // hash password before storing it to db
     const otp = Math.floor(100000 + Math.random() * 900000);
     await Otp.findOneAndUpdate(
-        { email },
-        { otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
-        { upsert: true, new: true }
-    )
+    { email },
+    {
+        otp,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        tempUser: { name, email, password }
+    },
+    { upsert: true, returnDocument: 'after' }
+)
 
     await sendEmail(email , "OTP Verification"  , `<h3>Your Otp is ${otp}</h3>` )   
 

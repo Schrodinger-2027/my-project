@@ -1,3 +1,6 @@
+import { Otp } from '../models/otp.js'
+import { User } from '../models/user.js'
+
 export async function VerifyOtp(req, res) {
     const { email, otp } = req.body
 
