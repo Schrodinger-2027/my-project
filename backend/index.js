@@ -3,10 +3,12 @@ const dotenv = require('dotenv')
 const http = require('http')
 const cors = require('cors')
 const {WebSocketServer} = require('ws')
-const { connectDB } = require('./util')
+const { connectDB } = require('./util.js')
 const { UserSignUp } = require('./controllers/UserSignUp.js')
 const { userLogin } = require('./controllers/UserLogin.js')
 const { verifyToken } = require('./middlewares/auth.js')
+const { VerifyOtp } = require('./controllers/verifyOtp.js')
+const { ResendOtp } = require('./controllers/resendOtp.js')
 
 dotenv.config()
 
@@ -16,8 +18,9 @@ const MONGODB_URL = process.env.MONGODB_URL
 const app = express()
 connectDB(MONGODB_URL)
 
+
 app.use(cors({
-  origin: "https://chatting-pritam.vercel.app",
+  origin: "*",
   credentials: true
 }))
 app.use(express.json())
@@ -47,8 +50,6 @@ wss.on('connection' , async (ws , req)=>{
     }
     ws.userId = decoded.userId
     ws.name = decoded.name
-
-    console.log(decoded)
    
     ws.on('message' , (data)=>{
         
@@ -107,6 +108,8 @@ app.get('/' , (req , res)=>{
 
 app.post('/signup' , UserSignUp)
 app.post('/login' , userLogin)
+app.post('/verify-otp' , VerifyOtp)
+app.post('/resend-otp' , ResendOtp)
 
 
 

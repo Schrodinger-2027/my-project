@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import nodemailer from 'nodemailer';
+
 
 export function connectDB(URL){
     mongoose.connect(URL)
@@ -9,4 +11,5 @@ export function connectDB(URL){
         console.log('error is : ' , err)
     })
 }
+
 

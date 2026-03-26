@@ -2,82 +2,397 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChatRoom</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg: #0d0d0f; --surface: #16161a; --surface2: #1e1e24;
-      --border: #2a2a35; --accent: #7c5cfc; --accent2: #c084fc;
-      --sent: #7c5cfc; --text: #e8e8f0; --muted: #6b6b80;
-      --error: #f87171; --success: #4ade80;
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --surface2: #1e1e24;
+      --border: #2a2a35;
+      --accent: #7c5cfc;
+      --accent2: #c084fc;
+      --sent: #7c5cfc;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --error: #f87171;
+      --success: #4ade80;
     }
-    body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; }
-    .app { position: relative; z-index: 1; width: 420px; max-height: 95vh; }
-    .auth-screen { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px 36px; box-shadow: 0 0 80px rgba(124,92,252,0.08); }
-    .brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; letter-spacing: -1px; margin-bottom: 4px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .brand-sub { font-size: 12px; color: var(--muted); margin-bottom: 36px; letter-spacing: 0.05em; }
-    .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
-    .tab { flex: 1; padding: 8px; border: none; background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; border-radius: 7px; transition: all 0.2s; }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: 420px;
+      max-height: 95vh;
+    }
+
+    /* ── AUTH ── */
+    .auth-screen {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 36px;
+      box-shadow: 0 0 80px rgba(124,92,252,0.08);
+    }
+
+    .brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 36px;
+      letter-spacing: 0.05em;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 7px;
+      transition: all 0.2s;
+    }
+
     .tab.active { background: var(--accent); color: white; }
+
     .form-group { margin-bottom: 16px; }
-    label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
-    input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
     input:focus { border-color: var(--accent); }
-    .btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 10px; color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.03em; cursor: pointer; margin-top: 8px; transition: opacity 0.2s, transform 0.1s; }
-    .btn:hover { opacity: 0.9; } .btn:active { transform: scale(0.98); } .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .status-msg { margin-top: 14px; font-size: 12px; text-align: center; min-height: 18px; }
-    .status-msg.error { color: var(--error); } .status-msg.success { color: var(--success); }
-    .chat-screen { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: 0 0 80px rgba(124,92,252,0.08); flex-direction: column; height: 88vh; }
-    .chat-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface2); }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-weight: 400;
+      font-size: 12px;
+    }
+
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+    .status-msg {
+      margin-top: 14px;
+      font-size: 12px;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .status-msg.error   { color: var(--error); }
+    .status-msg.success { color: var(--success); }
+
+    /* ── OTP ── */
+    .otp-note {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.7;
+    }
+
+    .otp-note span { color: var(--accent2); }
+
+    .otp-inputs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .otp-box {
+      width: 48px !important;
+      height: 52px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 500;
+      padding: 0 !important;
+      border-radius: 10px;
+      letter-spacing: 0;
+    }
+
+    .resend-row {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+
+    .resend-row button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      margin-left: 4px;
+    }
+
+    .resend-row button:disabled { color: var(--muted); text-decoration: none; cursor: not-allowed; }
+
+    /* ── CHAT ── */
+    .chat-screen {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 80px rgba(124,92,252,0.08);
+      flex-direction: column;
+      height: 88vh;
+    }
+
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface2);
+    }
+
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
-    .room-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
-    .room-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; }
+
+    .room-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+
+    .room-name     { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; }
     .room-id-label { font-size: 11px; color: var(--muted); }
-    .disconnect-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 5px 10px; cursor: pointer; transition: all 0.2s; }
+
+    .disconnect-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
     .disconnect-btn:hover { border-color: var(--error); color: var(--error); }
-    .room-bar { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+
+    .room-bar {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+
     .room-bar input { flex: 1; padding: 9px 12px; font-size: 12px; }
     .room-bar .join-btn { width: auto; padding: 9px 16px; font-size: 12px; margin-top: 0; border-radius: 8px; }
-    #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-    .msg { max-width: 72%; padding: 9px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; word-break: break-word; animation: popIn 0.15s ease; }
-    @keyframes popIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .sent { align-self: flex-end; background: var(--sent); color: white; border-bottom-right-radius: 4px; }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .msg {
+      max-width: 72%;
+      padding: 9px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+      animation: popIn 0.15s ease;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .sent     { align-self: flex-end;   background: var(--sent); color: white; border-bottom-right-radius: 4px; }
     .received { align-self: flex-start; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-    .system { align-self: center; color: var(--muted); font-size: 11px; font-style: italic; background: none; padding: 2px 0; }
-    .input-bar { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; background: var(--surface2); }
+    .system   { align-self: center;     color: var(--muted); font-size: 11px; font-style: italic; background: none; padding: 2px 0; }
+
+    .input-bar {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      background: var(--surface2);
+    }
+
     .input-bar input { flex: 1; padding: 11px 14px; border-radius: 10px; font-size: 13px; }
     .send-btn { width: auto; padding: 11px 18px; margin-top: 0; border-radius: 10px; font-size: 13px; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .form-slide { animation: slideIn 0.2s ease; }
   </style>
 </head>
 <body>
 <div class="app">
-  <!-- AUTH SCREEN -->
+
+  <!-- ══ AUTH SCREEN ══ -->
   <div class="auth-screen" id="authScreen">
     <div class="brand">ChatRoom</div>
-    <div class="brand-sub"> real-time encrypted rooms</div>
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('login')">Login</button>
-      <button class="tab" onclick="switchTab('signup')">Sign Up</button>
+    <div class="brand-sub">⚡ real-time encrypted rooms</div>
+
+    <div class="tabs" id="authTabs">
+      <button type="button" class="tab active" onclick="switchTab('login')">Login</button>
+      <button type="button" class="tab" onclick="switchTab('signup')">Sign Up</button>
     </div>
+
     <!-- Login -->
-    <div id="loginForm">
-      <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" /></div>
-      <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') handleLogin()" /></div>
-      <button class="btn" onclick="handleLogin()" id="loginBtn">Login</button>
+    <div id="loginForm" class="form-slide">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword"
+          onkeydown="if(event.key==='Enter'){ handleLogin(); return false; }" />
+      </div>
+        <button type="button" class="btn" onclick="handleLogin()" id="loginBtn">Login</button>
     </div>
+
     <!-- Signup -->
-    <div id="signupForm" style="display:none">
-      <div class="form-group"><label>Name</label><input type="text" id="signupName" placeholder="Your name" /></div>
-      <div class="form-group"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com" /></div>
-      <div class="form-group"><label>Password</label><input type="password" id="signupPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') handleSignup()" /></div>
-      <button class="btn" onclick="handleSignup()" id="signupBtn">Create Account</button>
+    <div id="signupForm" style="display:none" class="form-slide">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="signupName" placeholder="Your name" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+          <input type="password" id="signupPassword"
+            onkeydown="if(event.key==='Enter'){ handleSignup(); return false; }" />
+      </div>
+      <button type="button" class="btn" onclick="handleSignup()" id="signupBtn">Create Account</button>
     </div>
+
+    <!-- OTP -->
+    <div id="otpForm" style="display:none" class="form-slide">
+      <p class="otp-note">
+        We sent a 6-digit code to<br>
+        <span id="otpEmailLabel"></span>
+      </p>
+      <div class="otp-inputs">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box" id="otp0" oninput="otpInput(0)" onkeydown="otpKey(event,0)" />
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box" id="otp1" oninput="otpInput(1)" onkeydown="otpKey(event,1)" />
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box" id="otp2" oninput="otpInput(2)" onkeydown="otpKey(event,2)" />
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box" id="otp3" oninput="otpInput(3)" onkeydown="otpKey(event,3)" />
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box" id="otp4" oninput="otpInput(4)" onkeydown="otpKey(event,4)" />
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box" id="otp5" oninput="otpInput(5)" onkeydown="otpKey(event,5)" />
+      </div>
+      <button class="btn" onclick="handleVerifyOtp()" id="otpBtn">Verify OTP</button>
+      <button class="btn btn-ghost" onclick="switchTab('signup')" style="margin-top:8px">← Back</button>
+      <div class="resend-row">
+        Didn't receive it?
+        <button id="resendBtn" onclick="resendOtp()">Resend</button>
+      </div>
+    </div>
+
     <div class="status-msg" id="authStatus"></div>
   </div>
 
-  <!-- CHAT SCREEN -->
+  <!-- ══ CHAT SCREEN ══ -->
   <div class="chat-screen" id="chatScreen">
     <div class="chat-header">
       <div class="chat-header-left">
@@ -95,84 +410,191 @@
     </div>
     <div id="messages"></div>
     <div class="input-bar">
-      <input id="msgInput" placeholder="Type a message..." disabled onkeydown="if(event.key==='Enter') sendMsg()" />
+      <input id="msgInput" placeholder="Type a message..." disabled
+             onkeydown="if(event.key==='Enter') sendMsg()" />
       <button class="btn send-btn" onclick="sendMsg()" id="sendBtn" disabled>Send</button>
     </div>
   </div>
+
 </div>
-
 <script>
+  const API = 'https://my-project-83jg.onrender.com'
   let ws = null, token = null, inRoom = false
+  let pendingEmail = null
 
+  // restore session
   window.onload = () => {
-    const savedToken = localStorage.getItem("token")
-
-    if (savedToken) {
-      token = savedToken
-      connectWebSocket()
-    }
+    const saved = localStorage.getItem('token')
+    if (saved) { token = saved; connectWebSocket() }
   }
 
+  // tab switcher
   function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')))
-    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none'
-    document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none'
+    const isLogin  = tab === 'login'
+    const isSignup = tab === 'signup'
+    const isOtp    = tab === 'otp'
+    document.querySelectorAll('.tab').forEach((t, i) =>
+      t.classList.toggle('active', (i === 0) === isLogin))
+    document.getElementById('authTabs').style.display   = isOtp ? 'none' : 'flex'
+    document.getElementById('loginForm').style.display  = isLogin  ? 'block' : 'none'
+    document.getElementById('signupForm').style.display = isSignup ? 'block' : 'none'
+    document.getElementById('otpForm').style.display    = isOtp    ? 'block' : 'none'
     setStatus('', '')
   }
 
   function setStatus(msg, type) {
     const el = document.getElementById('authStatus')
     el.textContent = msg
-    el.className = 'status-msg ' + type
+    el.className = 'status-msg ' + (type || '')
   }
 
+  // ── SIGNUP ──
   async function handleSignup() {
-    const name = document.getElementById('signupName').value.trim()
-    const email = document.getElementById('signupEmail').value.trim()
+    const name     = document.getElementById('signupName').value.trim()
+    const email    = document.getElementById('signupEmail').value.trim()
     const password = document.getElementById('signupPassword').value
     if (!name || !email || !password) return setStatus('Fill in all fields', 'error')
+
     const btn = document.getElementById('signupBtn')
     btn.disabled = true; btn.textContent = 'Creating...'
     try {
-      await fetch('https://my-project-83jg.onrender.com/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) })
-      setStatus('Account created! Please login.', 'success')
-      switchTab('login')
-    } catch { setStatus('Server error. Try again.', 'error') }
-    finally { btn.disabled = false; btn.textContent = 'Create Account' }
+      const res  = await fetch(`${API}/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      })
+      const data = await res.json()
+      if (!res.ok) return setStatus(data.message || 'Signup failed', 'error')
+
+      pendingEmail = email
+      document.getElementById('otpEmailLabel').textContent = email
+      clearOtpBoxes()
+      switchTab('otp')
+      setStatus('OTP sent to your email!', 'success')
+    } catch {
+      setStatus('Server error. Try again.', 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create Account'
+    }
   }
 
+  // ── OTP helpers ──
+  function otpInput(i) {
+    const box = document.getElementById(`otp${i}`)
+    box.value = box.value.replace(/\D/g, '')
+    if (box.value && i < 5) document.getElementById(`otp${i + 1}`).focus()
+    if (getOtpValue().length === 6) handleVerifyOtp()
+  }
+
+  function otpKey(e, i) {
+    if (e.key === 'Backspace' && !document.getElementById(`otp${i}`).value && i > 0)
+      document.getElementById(`otp${i - 1}`).focus()
+  }
+
+  function getOtpValue() {
+    return Array.from({length: 6}, (_, i) => document.getElementById(`otp${i}`).value).join('')
+  }
+
+  function clearOtpBoxes() {
+    for (let i = 0; i < 6; i++) document.getElementById(`otp${i}`).value = ''
+    setTimeout(() => document.getElementById('otp0').focus(), 50)
+  }
+
+  // ── VERIFY OTP ──
+  async function handleVerifyOtp() {
+    const otp = getOtpValue()
+    if (otp.length < 6) return setStatus('Enter the 6-digit code', 'error')
+
+    const btn = document.getElementById('otpBtn')
+    btn.disabled = true; btn.textContent = 'Verifying...'
+    try {
+      const res  = await fetch(`${API}/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail, otp })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setStatus(data.message || 'Invalid OTP', 'error')
+        clearOtpBoxes()
+        return
+      }
+      setStatus('Email verified! Please login.', 'success')
+      document.getElementById('loginEmail').value = pendingEmail
+      pendingEmail = null
+      switchTab('login')
+    } catch {
+      setStatus('Server error. Try again.', 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Verify OTP'
+    }
+  }
+
+  // ── RESEND OTP ──
+  async function resendOtp() {
+    if (!pendingEmail) return
+    const btn = document.getElementById('resendBtn')
+    btn.disabled = true
+    let cd = 30
+    const t = setInterval(() => {
+      btn.textContent = `Resend (${cd--}s)`
+      if (cd < 0) { clearInterval(t); btn.disabled = false; btn.textContent = 'Resend' }
+    }, 1000)
+    try {
+      await fetch(`${API}/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail })
+      })
+      setStatus('New OTP sent!', 'success')
+    } catch {
+      setStatus('Failed to resend. Try again.', 'error')
+    }
+  }
+
+  // ── LOGIN ──
   async function handleLogin() {
-    const email = document.getElementById('loginEmail').value.trim()
+    const email    = document.getElementById('loginEmail').value.trim()
     const password = document.getElementById('loginPassword').value
     if (!email || !password) return setStatus('Fill in all fields', 'error')
+
     const btn = document.getElementById('loginBtn')
     btn.disabled = true; btn.textContent = 'Logging in...'
     try {
-      const res = await fetch('https://my-project-83jg.onrender.com/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      const res  = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
       const data = await res.json()
-      if (!data.token) { setStatus(data.message || 'Login failed', 'error'); return }
-      token = data.token   // ✅ save token
-      localStorage.setItem("token", token) 
-      connectWebSocket()   // ✅ now connect WS
-    } catch { setStatus('Server error. Try again.', 'error') }
-    finally { btn.disabled = false; btn.textContent = 'Login' }
+      if (!res.ok || !data.token) return setStatus(data.message || 'Login failed', 'error')
+      token = data.token
+      localStorage.setItem('token', token)
+      connectWebSocket()
+    } catch {
+      setStatus('Server error. Try again.', 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Login'
+    }
   }
 
+  // ── WEBSOCKET ──
   function connectWebSocket() {
-    ws = new WebSocket(`wss://my-project-83jg.onrender.com?token=${token}`)  // ✅ token in URL
+    ws = new WebSocket(`wss://my-project-83jg.onrender.com?token=${token}`)
+
     ws.onopen = () => {
       document.getElementById('authScreen').style.display = 'none'
       document.getElementById('chatScreen').style.display = 'flex'
     }
+
     ws.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data)
-        if (data.message) {
-          addMsg(`${data.sender}: ${data.message}`, 'received')
-        }
+        if (data.message) addMsg(`${data.sender}: ${data.message}`, 'received')
         else if (data.error) addMsg('⚠ ' + data.error, 'system')
       } catch { addMsg(e.data, 'system') }
     }
+
     ws.onclose = () => {
       ws = null; token = null; inRoom = false
       document.getElementById('chatScreen').style.display = 'none'
@@ -183,11 +605,15 @@
       document.getElementById('joinBtn').disabled = false
       document.getElementById('joinBtn').textContent = 'Join'
       document.getElementById('messages').innerHTML = ''
+      switchTab('login')
       setStatus('Session ended. Please login again.', 'error')
-      localStorage.removeItem("token")
+      localStorage.removeItem('token')
     }
+
+    ws.onerror = () => setStatus('Connection error. Please try again.', 'error')
   }
 
+  // ── ROOM & CHAT ──
   function joinRoom() {
     const roomId = document.getElementById('roomInput').value.trim()
     if (!roomId || !ws) return
@@ -203,9 +629,9 @@
   }
 
   function sendMsg() {
-    const input = document.getElementById('msgInput')
+    const input  = document.getElementById('msgInput')
     const roomId = document.getElementById('roomInput').value.trim()
-    const msg = input.value.trim()
+    const msg    = input.value.trim()
     if (!msg || !ws || !inRoom) return
     ws.send(JSON.stringify({ type: 'message', roomId, message: msg }))
     addMsg(msg, 'sent')
@@ -215,7 +641,7 @@
   function disconnect() { if (ws) ws.close() }
 
   function addMsg(text, type) {
-    const el = document.getElementById('messages')
+    const el  = document.getElementById('messages')
     const div = document.createElement('div')
     div.classList.add('msg', type)
     div.textContent = text
