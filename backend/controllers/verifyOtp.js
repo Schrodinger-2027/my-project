@@ -23,7 +23,12 @@ export async function VerifyOtp(req, res) {
     // OTP is valid — now save the user
     const { name, email: userEmail, password } = record.tempUser
 
-    const user = new User({ name, email: userEmail, password })
+    const user = new User({ 
+        name,
+        email: userEmail,
+        password  , 
+        verified : true
+    })
     await user.save()
 
     // Clean up OTP record
