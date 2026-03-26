@@ -20,7 +20,7 @@ connectDB(MONGODB_URL)
 
 
 app.use(cors({
-  origin: "https://chatting-pritam.vercel.app/",
+  origin: "*",
   credentials: true
 }))
 app.use(express.json())
